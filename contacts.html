@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts - Tellus Mod</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            background-color: #000;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: all 0.15s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .cursor.active {
+            transform: translate(-50%, -50%) scale(0.5);
+            background: #4CAF50;
+        }
+
+        /* Particle Canvas */
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 25px 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        nav.scrolled {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px 80px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .logo:hover .logo-icon {
+            transform: rotate(360deg);
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #4CAF50 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 50px;
+        }
+        
+        nav a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-weight: 600;
+            position: relative;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+            transition: width 0.4s ease;
+        }
+
+        nav a:hover {
+            color: #fff;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 50vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), 
+                        url('background.jpg') no-repeat center center;
+            background-size: cover;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(76, 175, 80, 0.15) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .hero-content {
+            animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .hero h1 {
+            font-size: 5.5rem;
+            margin: 0;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #4CAF50 50%, #45a049 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -3px;
+        }
+
+        .hero p {
+            font-size: 1.8rem;
+            margin-top: 25px;
+            font-weight: 300;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+        }
+
+        /* Contact Section */
+        section {
+            padding: 150px 80px;
+            background: linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%);
+            min-height: 70vh;
+            position: relative;
+        }
+
+        section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+        }
+
+        section h2 {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #4CAF50 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            letter-spacing: -2px;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.3rem;
+            opacity: 0.7;
+            margin-bottom: 80px;
+            font-weight: 300;
+        }
+
+        .contact-container {
+            display: flex;
+            justify-content: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .contact-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 60px 50px;
+            text-align: center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(50px);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .contact-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .contact-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .contact-card.visible {
+            animation: fadeInScale 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .contact-card:hover {
+            transform: translateY(-15px);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.05) 100%);
+            border-color: rgba(76, 175, 80, 0.4);
+            box-shadow: 0 30px 60px rgba(76, 175, 80, 0.3);
+        }
+
+        .contact-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 35px;
+            font-size: 3.5rem;
+            transition: all 0.4s ease;
+        }
+
+        .contact-card:hover .contact-icon {
+            transform: rotateY(360deg);
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .contact-card p {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            opacity: 0.85;
+            margin-bottom: 40px;
+        }
+
+        .discord-btn {
+            display: inline-block;
+            padding: 22px 55px;
+            background: linear-gradient(135deg, #7289DA 0%, #5865F2 100%);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            box-shadow: 0 20px 60px rgba(114, 137, 218, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .discord-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .discord-btn:hover::before {
+            left: 100%;
+        }
+
+        .discord-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 80px rgba(114, 137, 218, 0.6);
+        }
+
+        .discord-icon {
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+
+        /* Floating shapes */
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.1;
+            animation: float 25s ease-in-out infinite;
+        }
+
+        .shape1 {
+            width: 500px;
+            height: 500px;
+            background: #4CAF50;
+            top: 20%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .shape2 {
+            width: 400px;
+            height: 400px;
+            background: #45a049;
+            bottom: 20%;
+            right: 5%;
+            animation-delay: 8s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(60px, 60px) rotate(90deg); }
+            50% { transform: translate(0, 120px) rotate(180deg); }
+            75% { transform: translate(-60px, 60px) rotate(270deg); }
+        }
+
+        /* Footer */
+        footer {
+            padding: 80px 80px;
+            background: #000;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #4CAF50, transparent);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body { cursor: auto; }
+            .cursor, .cursor-follower { display: none; }
+            
+            nav {
+                padding: 20px;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-links {
+                gap: 20px;
+            }
+
+            .hero {
+                height: 40vh;
+            }
+
+            .hero h1 {
+                font-size: 3.5rem;
+                letter-spacing: -2px;
+            }
+
+            .hero p {
+                font-size: 1.3rem;
+            }
+
+            section {
+                padding: 80px 20px;
+            }
+
+            section h2 {
+                font-size: 2.5rem;
+            }
+
+            .contact-card {
+                padding: 40px 30px;
+            }
+
+            .contact-card p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <canvas id="particles"></canvas>
+
+    <nav id="navbar">
+        <div class="logo">
+            <div class="logo-icon">
+                <img src="tellus_logo.png" alt="Tellus Logo">
+            </div>
+            <div class="logo-text">TELLUS</div>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="gallery.html">Gallery</a>
+            <a href="download.html">Download</a>
+            <a href="contacts.html">Contacts</a>
+            <a href="updates.html">Updates</a>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h1>Contact Us</h1>
+            <p>Get in touch with the Tellus community</p>
+        </div>
+    </div>
+
+    <section>
+        <div class="floating-shape shape1"></div>
+        <div class="floating-shape shape2"></div>
+        
+        <h2>Join Our Community</h2>
+        <p class="subtitle">Connect with other players, get support, and stay updated with the latest news</p>
+        
+        <div class="contact-container">
+            <div class="contact-card">
+                <div class="contact-icon">💬</div>
+                <p>Join our Discord server for support, updates, and community discussions. Share your creations, ask questions, and collaborate with fellow Tellus enthusiasts!</p>
+                <a href="https://discord.gg/fs8uhuDhp2" class="discord-btn">
+                    <span class="discord-icon">💬</span>Join Discord Server
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Tellus Mod Team. All rights reserved. [Website Developed By Lord OMT]</p>
+    </footer>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const follower = document.querySelector('.cursor-follower');
+        let mouseX = 0, mouseY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursor.style.left = mouseX + 'px';
+            cursor.style.top = mouseY + 'px';
+        });
+
+        function animateFollower() {
+            followerX += (mouseX - followerX) * 0.1;
+            followerY += (mouseY - followerY) * 0.1;
+            follower.style.left = followerX + 'px';
+            follower.style.top = followerY + 'px';
+            requestAnimationFrame(animateFollower);
+        }
+        animateFollower();
+
+        document.addEventListener('mousedown', () => cursor.classList.add('active'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('active'));
+
+        // Particle System
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 60;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 150) {
+                    const force = (150 - distance) / 150;
+                    this.x -= dx * force * 0.03;
+                    this.y -= dy * force * 0.03;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(76, 175, 80, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 120) {
+                        ctx.strokeStyle = `rgba(76, 175, 80, ${0.15 * (1 - distance / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            connectParticles();
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.contact-card').forEach(el => observer.observe(el));
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
