@@ -4,6 +4,10 @@ const logoutBtn = document.getElementById("logoutBtn");
 const adminPanel = document.getElementById("adminPanel");
 const updatesDiv = document.getElementById("updates");
 
+let currentUser = null;
+let isAdmin = false;
+let updatesCache = [];
+
 // ===== Login =====
 loginBtn.onclick = async () => {
   try {
@@ -18,29 +22,48 @@ loginBtn.onclick = async () => {
 // ===== Logout =====
 logoutBtn.onclick = () => auth.signOut();
 
+// ===== Render posts =====
+function renderUpdates() {
+  updatesDiv.innerHTML = "";
+
+  updatesCache.forEach(({ id, data }) => {
+    updatesDiv.innerHTML += `
+      <div class="post">
+        <div>${escapeHtml(data.text)}</div>
+        ${
+          isAdmin
+            ? `<button class="deleteBtn" onclick="deletePost('${id}')">Delete</button>`
+            : ""
+        }
+      </div>
+    `;
+  });
+}
+
 // ===== Auth state =====
 auth.onAuthStateChanged(user => {
+  currentUser = user;
+  isAdmin = user && user.email === ADMIN_EMAIL;
+
+  console.log("Logged in as:", user?.email);
+  console.log("Is admin:", isAdmin);
+
   if (user) {
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
-
-    // 👑 Only admin sees posting tools
-    if (user.email === ADMIN_EMAIL) {
-      adminPanel.style.display = "block";
-    } else {
-      adminPanel.style.display = "none";
-    }
+    adminPanel.style.display = isAdmin ? "block" : "none";
   } else {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     adminPanel.style.display = "none";
   }
+
+  renderUpdates(); // 🔥 re-render when auth changes
 });
 
 // ===== Post update =====
 async function postUpdate() {
-  const user = auth.currentUser;
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!isAdmin) {
     alert("Not authorized");
     return;
   }
@@ -53,7 +76,7 @@ async function postUpdate() {
     await db.collection("updates").add({
       text,
       date: Date.now(),
-      author: user.email
+      author: currentUser.email
     });
 
     textBox.value = "";
@@ -65,8 +88,7 @@ async function postUpdate() {
 
 // ===== Delete update =====
 async function deletePost(id) {
-  const user = auth.currentUser;
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!isAdmin) {
     alert("Not authorized");
     return;
   }
@@ -85,30 +107,19 @@ async function deletePost(id) {
 db.collection("updates")
   .orderBy("date", "desc")
   .onSnapshot(snapshot => {
-    updatesDiv.innerHTML = "";
+    updatesCache = [];
 
     snapshot.forEach(doc => {
-      const data = doc.data();
-      const id = doc.id;
-
-      const isAdmin =
-        auth.currentUser &&
-        auth.currentUser.email === ADMIN_EMAIL;
-
-      updatesDiv.innerHTML += `
-        <div class="post">
-          <div>${escapeHtml(data.text)}</div>
-          ${
-            isAdmin
-              ? `<button class="deleteBtn" onclick="deletePost('${id}')">Delete</button>`
-              : ""
-          }
-        </div>
-      `;
+      updatesCache.push({
+        id: doc.id,
+        data: doc.data()
+      });
     });
+
+    renderUpdates();
   });
 
-// ===== Safety: prevent HTML injection =====
+// ===== Safety =====
 function escapeHtml(text) {
   const div = document.createElement("div");
   div.innerText = text;
